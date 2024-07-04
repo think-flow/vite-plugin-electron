@@ -14,3 +14,8 @@ interface ImportMeta {
   /** shims Vite */
   env: Record<string, any>
 }
+
+declare module '*?modulePath' {
+  const src: string;
+  export default src;
+}

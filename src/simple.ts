@@ -28,6 +28,7 @@ export interface ElectronSimpleOptions {
 // The simple API just like v0.9.x
 // Vite v3.x support async plugin.
 export default async function electronSimple(options: ElectronSimpleOptions): Promise<Plugin[]> {
+  await loadPluginForMain(options)
   const flatApiOptions = [options.main]
   const packageJson = resolvePackageJson() ?? {}
   const esmodule = packageJson.type === 'module'
@@ -130,4 +131,13 @@ function resolvePackageJson(root = process.cwd()): {
   } catch {
     return null
   }
+}
+
+async function loadPluginForMain(options: ElectronSimpleOptions): Promise<void> {
+  if (!options.main) return
+  const mainOptions = options.main
+  mainOptions.vite ??= {}
+  mainOptions.vite.plugins ??= []
+  const modulePathPlugin = await import('./plugins/modulePath')
+  mainOptions.vite.plugins.push(modulePathPlugin.default())
 }

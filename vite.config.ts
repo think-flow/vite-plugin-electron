@@ -25,6 +25,7 @@ export default defineConfig(() => {
           index: 'src/index.ts',
           plugin: 'src/plugin.ts',
           simple: 'src/simple.ts',
+          modulePath: 'src/plugins/modulePath.ts',
         },
         formats: ['cjs', 'es'],
         fileName: format => format === 'es' ? '[name].mjs' : '[name].js',
@@ -77,6 +78,7 @@ function generateTypes() {
 }
 
 function moveTypesToDist() {
+  /*
   const types = path.join(__dirname, 'types')
   const dist = path.join(__dirname, 'dist')
   const files = fs.readdirSync(types).filter(n => n.endsWith('.d.ts'))
@@ -87,5 +89,29 @@ function moveTypesToDist() {
 
     const cwd = process.cwd()
     console.log('[types]', `${path.relative(cwd, from)} -> ${path.relative(cwd, to)}`)
+  }
+  */
+
+  // Support moving recursively.
+  const types = path.join(__dirname, 'types')
+  const dist = path.join(__dirname, 'dist')
+  const stack = [types];
+  while (stack.length > 0) {
+    const currentDir = stack.pop()!
+    const files = fs.readdirSync(currentDir)
+    for (const file of files) {
+      const from = path.join(currentDir, file)
+      const stat = fs.statSync(from)
+      if (stat.isDirectory()) {
+        stack.push(from)
+      } else {
+        if (!file.endsWith('.d.ts')) continue
+        const to = path.join(dist, file)
+        fs.writeFileSync(to, fs.readFileSync(from, 'utf8'))
+
+        const cwd = process.cwd()
+        console.log('[types]', `${path.relative(cwd, from)} -> ${path.relative(cwd, to)}`)
+      }
+    }
   }
 }
